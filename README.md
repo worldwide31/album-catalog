@@ -83,3 +83,87 @@ python run.py
 http://127.0.0.1:5000
 ```
 
+## Git
+
+```bash
+git init
+git add .
+git commit -m "Initial album catalog app"
+git branch staging
+git branch prod
+git branch
+```
+
+Переключение между ветками:
+
+```bash
+git checkout staging
+git checkout prod
+git checkout main
+```
+
+## Docker
+
+Приложение подготовлено для запуска в контейнере Docker.
+
+### Что было изменено
+
+- приложение слушает адрес `0.0.0.0`;
+- порт задаётся через переменную окружения `PORT`;
+- добавлен `Dockerfile`;
+- добавлен `.dockerignore`;
+- зависимости устанавливаются внутри контейнера.
+
+### Сборка образа
+
+```bash
+docker build -t album-catalog .
+```
+
+### Запуск контейнера
+
+```bash
+docker run --name album-catalog-container -p 8080:5000 -e PORT=5000 album-catalog
+```
+
+После запуска откройте в браузере:
+
+```text
+http://localhost:8080
+```
+
+### Остановка контейнера
+
+Вариант 1: нажать `Ctrl+C` в терминале, где запущен контейнер.
+
+Вариант 2: из другого терминала выполнить:
+
+```bash
+docker stop album-catalog-container
+```
+
+### Повторный запуск контейнера
+
+```bash
+docker start album-catalog-container
+```
+
+### Удаление контейнера
+
+```bash
+docker rm album-catalog-container
+```
+
+Если контейнер ещё работает:
+
+```bash
+docker rm -f album-catalog-container
+```
+
+### Пересборка образа
+
+Даже если удалить `.venv` из проекта, образ соберётся снова, потому что зависимости устанавливаются внутри Docker:
+
+```bash
+docker build -t album-catalog .
+```
