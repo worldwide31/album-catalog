@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card">
+    <h2>Мои альбомы</h2>
+
+    {% if albums %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Альбом</th>
+                    <th>Исполнитель</th>
+                    <th>Год</th>
+                    <th>Оценка</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for album in albums %}
+                    <tr>
+                        <td>{{ album.title }}</td>
+                        <td>{{ album.artist }}</td>
+                        <td>{{ album.year }}</td>
+                        <td>{{ album.rating }}/10</td>
+                        <td>
+                            <form method="post" action="{{ url_for('albums.delete', album_id=album.id) }}">
+                                <button type="submit">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Пока альбомов нет. Добавьте первый альбом.</p>
+    {% endif %}
+</section>
+{% endblock %}
