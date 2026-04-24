@@ -5,3 +5,9 @@ __pycache__/
 instance/
 *.db
 .DS_Store
+# Local configuration and secrets
+config.yaml
+# Local databases
+# IDE files
+.idea/
+.vscode/

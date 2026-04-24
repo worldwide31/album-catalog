@@ -167,3 +167,73 @@ docker rm -f album-catalog-container
 ```bash
 docker build -t album-catalog .
 ```
+
+## Практика 3: конфигурация через переменные окружения
+
+Настройки приложения вынесены из кода.
+
+Используемые переменные:
+
+| Переменная | Назначение | Значение по умолчанию |
+|---|---|---|
+| `APP_NAME` | Название приложения | `Каталог альбомов` |
+| `HOST` | Хост приложения | `0.0.0.0` |
+| `PORT` | Порт приложения | `5000` |
+| `FLASK_ENV` | Режим запуска | `production` |
+| `SECRET_KEY` | Секретный ключ Flask | `change-me-only-for-local-dev` |
+| `DATABASE_URL` | Строка подключения к БД | `sqlite:///albums.db` |
+| `CONFIG_FILE` | YAML-файл конфигурации | `config.yaml` |
+
+Для локальной разработки можно создать файлы:
+
+```bash
+copy .env.example .env
+copy config.yaml.example config.yaml
+```
+
+На macOS/Linux:
+
+```bash
+cp .env.example .env
+cp config.yaml.example config.yaml
+```
+
+Переменные окружения имеют приоритет над `config.yaml`.
+
+### Сборка образа
+
+```bash
+docker build -t album-catalog:config .
+```
+
+### Запуск dev-окружения
+
+```bash
+docker run --rm --name album-catalog-dev -p 8080:5000 ^
+  -e APP_NAME="Каталог альбомов DEV" ^
+  -e PORT=5000 ^
+  -e FLASK_ENV=development ^
+  -e SECRET_KEY=dev-secret-example ^
+  -e DATABASE_URL=sqlite:///albums_dev.db ^
+  album-catalog:config
+```
+
+Открыть:
+
+```text
+http://localhost:8080
+```
+
+### Запуск prod-окружения тем же образом
+
+```bash
+docker run --rm --name album-catalog-prod -p 8080:7000 ^
+  -e APP_NAME="Каталог альбомов PROD" ^
+  -e PORT=7000 ^
+  -e FLASK_ENV=production ^
+  -e SECRET_KEY=prod-secret-example ^
+  -e DATABASE_URL=sqlite:///albums_prod.db ^
+  album-catalog:config
+```
+
+В этом случае образ не пересобирается. Меняются только переменные окружения.

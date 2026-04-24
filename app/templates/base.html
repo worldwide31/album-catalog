@@ -2,13 +2,13 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8">
-    <title>Каталог альбомов</title>
+    <title>{{ config["APP_NAME"] }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <main class="container">
         <header class="header">
-            <h1>Каталог альбомов</h1>
+            <h1>{{ config["APP_NAME"] }}</h1>
             <nav>
                 <a href="{{ url_for('albums.index') }}">Главная</a>
                 <a href="{{ url_for('albums.add') }}">Добавить альбом</a>
