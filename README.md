@@ -83,21 +83,3 @@ python run.py
 http://127.0.0.1:5000
 ```
 
-## Git
-
-```bash
-git init
-git add .
-git commit -m "Initial album catalog app"
-git branch staging
-git branch prod
-git branch
-```
-
-Переключение между ветками:
-
-```bash
-git checkout staging
-git checkout prod
-git checkout main
-```
