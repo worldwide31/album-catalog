@@ -8,7 +8,7 @@ from dynaconf import Dynaconf
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # .env и config.yaml нужны только для локальной разработки.
-# В Docker/staging/prod значения должны приходить из переменных окружения.
+# В staging/prod значения должны приходить из переменных окружения.
 load_dotenv(BASE_DIR / ".env")
 
 CONFIG_FILE = os.getenv("CONFIG_FILE", "config.yaml")
@@ -82,6 +82,18 @@ def build_database_url():
     return build_sqlite_url()
 
 
+def build_redis_url():
+    redis_url = get_setting("SESSION_REDIS_URL", None)
+    if redis_url:
+        return redis_url
+
+    redis_host = get_setting("REDIS_HOST", "redis")
+    redis_port = get_setting("REDIS_PORT", 6379, int)
+    redis_db = get_setting("REDIS_DB", 0, int)
+
+    return f"redis://{redis_host}:{redis_port}/{redis_db}"
+
+
 class Config:
     APP_NAME = get_setting("APP_NAME", "Каталог альбомов")
     HOST = get_setting("HOST", "0.0.0.0")
@@ -91,5 +103,12 @@ class Config:
 
     SECRET_KEY = get_setting("SECRET_KEY", "change-me-only-for-local-dev")
 
+    APP_VERSION = get_setting("APP_VERSION", "local")
+    RELEASE_ENVIRONMENT = get_setting("RELEASE_ENVIRONMENT", "local")
+
     DB_ENGINE = get_setting("DB_ENGINE", "sqlite")
     DATABASE_URL = build_database_url()
+
+    SESSION_TYPE = get_setting("SESSION_TYPE", "filesystem")
+    SESSION_REDIS_URL = build_redis_url()
+    SESSION_PERMANENT = False

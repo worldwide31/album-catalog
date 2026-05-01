@@ -1,6 +1,6 @@
 import socket
 
-from flask import Blueprint, current_app, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for
 
 from .services import add_album, count_albums, delete_album, get_all_albums
 
@@ -43,8 +43,25 @@ def health():
         {
             "status": "ok",
             "app_name": current_app.config["APP_NAME"],
+            "version": current_app.config["APP_VERSION"],
+            "environment": current_app.config["RELEASE_ENVIRONMENT"],
             "database": current_app.config["DB_ENGINE"],
+            "sessions": current_app.config["SESSION_TYPE"],
             "instance": socket.gethostname(),
             "albums_count": count_albums(),
+        }
+    )
+
+
+@albums_bp.route("/session-demo")
+def session_demo():
+    session["views"] = session.get("views", 0) + 1
+
+    return jsonify(
+        {
+            "message": "Счётчик хранится в централизованной сессии.",
+            "session_views": session["views"],
+            "session_storage": current_app.config["SESSION_TYPE"],
+            "instance": socket.gethostname(),
         }
     )

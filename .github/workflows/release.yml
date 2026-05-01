@@ -1,0 +1,77 @@
+name: Release fixed image with runtime configuration
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+      image_tag:
+        description: "Immutable image tag, for example sha-a1b2c3d"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: worldwide31/album-catalog
+
+jobs:
+  release:
+    name: Release without rebuilding image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout deployment files
+        uses: actions/checkout@v4
+
+      - name: Prepare runtime configuration
+        shell: bash
+        run: |
+          IMAGE="${REGISTRY}/${IMAGE_NAME}:${{ inputs.image_tag }}"
+          echo "APP_IMAGE=${IMAGE}" >> "$GITHUB_ENV"
+          echo "APP_VERSION=${{ inputs.image_tag }}" >> "$GITHUB_ENV"
+          echo "RELEASE_ENVIRONMENT=${{ inputs.environment }}" >> "$GITHUB_ENV"
+          echo "APP_NAME=Каталог альбомов ${{ inputs.environment }}" >> "$GITHUB_ENV"
+          echo "FLASK_ENV=production" >> "$GITHUB_ENV"
+          echo "SECRET_KEY=ci-smoke-secret" >> "$GITHUB_ENV"
+          echo "DB_NAME=albums_release" >> "$GITHUB_ENV"
+          echo "DB_USER=albums_user" >> "$GITHUB_ENV"
+          echo "DB_PASSWORD=albums_password" >> "$GITHUB_ENV"
+          echo "POSTGRES_DB=albums_release" >> "$GITHUB_ENV"
+          echo "POSTGRES_USER=albums_user" >> "$GITHUB_ENV"
+          echo "POSTGRES_PASSWORD=albums_password" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull fixed image
+        run: docker pull "$APP_IMAGE"
+
+      - name: Validate release compose file
+        run: docker compose -f docker-compose.release.yml config
+
+      - name: Release summary
+        shell: bash
+        run: |
+          {
+            echo "## Release prepared"
+            echo ""
+            echo "- Environment: $RELEASE_ENVIRONMENT"
+            echo "- Image: $APP_IMAGE"
+            echo "- App version: $APP_VERSION"
+            echo "- Build step: not executed in release workflow"
+            echo "- Configuration source: runtime environment variables"
+          } >> "$GITHUB_STEP_SUMMARY"

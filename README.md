@@ -1,221 +1,32 @@
 # Album Catalog
 
-Простое веб-приложение "Каталог альбомов".
+Простое веб-приложение **«Каталог альбомов»**.
 
 Поля альбома:
 
-- название альбома
-- исполнитель
-- год
-- оценка от 1 до 10
+- название альбома;
+- исполнитель;
+- год;
+- оценка от 1 до 10.
 
-## Цель проекта
+## Практика 5: сборка, релиз, запуск и масштабирование
 
-Проект показывает:
+В проект добавлены:
 
-- разделение кода и конфигурации;
-- отсутствие локальных абсолютных путей вроде `C:\Users\...` или `/home/user/...`;
-- структуру одного репозитория для одного приложения;
-- использование веток `staging` и `prod` как частей одной кодовой базы.
+- GitHub Actions workflow для сборки и публикации Docker-образа;
+- уникальные теги образа по commit hash и номеру сборки;
+- публикация образа в GitHub Container Registry;
+- release workflow без пересборки образа;
+- `docker-compose.release.yml` для запуска фиксированного образа с runtime-конфигурацией;
+- Redis для централизованного хранения сессий;
+- PostgreSQL для хранения состояния приложения;
+- Nginx как reverse proxy;
+- скрипт нагрузочной проверки `scripts/load_test.py`.
 
-## Структура
-
-```text
-album-catalog/
-├── app/
-│   ├── __init__.py
-│   ├── config.py
-│   ├── db.py
-│   ├── routes.py
-│   ├── services.py
-│   ├── templates/
-│   │   ├── base.html
-│   │   ├── form.html
-│   │   └── index.html
-│   └── static/
-│       └── style.css
-├── .env.example
-├── .gitignore
-├── requirements.txt
-├── README.md
-└── run.py
-```
-
-## Запуск
+## Локальный запуск через Docker Compose
 
 ```bash
-python -m venv .venv
-```
-
-Windows:
-
-```bash
-.venv\Scripts\activate
-```
-
-macOS/Linux:
-
-```bash
-source .venv/bin/activate
-```
-
-Установка зависимостей:
-
-```bash
-pip install -r requirements.txt
-```
-
-Создайте файл `.env` на основе `.env.example`:
-
-```bash
-cp .env.example .env
-```
-
-Запуск приложения:
-
-```bash
-python run.py
-```
-
-После запуска откройте:
-
-```text
-http://127.0.0.1:5000
-```
-
-## Git
-
-```bash
-git init
-git add .
-git commit -m "Initial album catalog app"
-git branch staging
-git branch prod
-git branch
-```
-
-Переключение между ветками:
-
-```bash
-git checkout staging
-git checkout prod
-git checkout main
-```
-
-## Docker
-
-Приложение подготовлено для запуска в контейнере Docker.
-
-### Что было изменено
-
-- приложение слушает адрес `0.0.0.0`;
-- порт задаётся через переменную окружения `PORT`;
-- добавлен `Dockerfile`;
-- добавлен `.dockerignore`;
-- зависимости устанавливаются внутри контейнера.
-
-### Сборка образа
-
-```bash
-docker build -t album-catalog .
-```
-
-### Запуск контейнера
-
-```bash
-docker run --name album-catalog-container -p 8080:5000 -e PORT=5000 album-catalog
-```
-
-После запуска откройте в браузере:
-
-```text
-http://localhost:8080
-```
-
-### Остановка контейнера
-
-Вариант 1: нажать `Ctrl+C` в терминале, где запущен контейнер.
-
-Вариант 2: из другого терминала выполнить:
-
-```bash
-docker stop album-catalog-container
-```
-
-### Повторный запуск контейнера
-
-```bash
-docker start album-catalog-container
-```
-
-### Удаление контейнера
-
-```bash
-docker rm album-catalog-container
-```
-
-Если контейнер ещё работает:
-
-```bash
-docker rm -f album-catalog-container
-```
-
-### Пересборка образа
-
-Даже если удалить `.venv` из проекта, образ соберётся снова, потому что зависимости устанавливаются внутри Docker:
-
-```bash
-docker build -t album-catalog .
-```
-
-## Практика 3: конфигурация через переменные окружения
-
-Настройки приложения вынесены из кода.
-
-Используемые переменные:
-
-| Переменная | Назначение | Значение по умолчанию |
-|---|---|---|
-| `APP_NAME` | Название приложения | `Каталог альбомов` |
-| `HOST` | Хост приложения | `0.0.0.0` |
-| `PORT` | Порт приложения | `5000` |
-| `FLASK_ENV` | Режим запуска | `production` |
-| `SECRET_KEY` | Секретный ключ Flask | `change-me-only-for-local-dev` |
-| `DATABASE_URL` | Строка подключения к БД | `sqlite:///albums.db` |
-| `CONFIG_FILE` | YAML-файл конфигурации | `config.yaml` |
-
-Для локальной разработки можно создать файлы:
-
-```bash
-copy .env.example .env
-copy config.yaml.example config.yaml
-```
-
-На macOS/Linux:
-
-```bash
-cp .env.example .env
-cp config.yaml.example config.yaml
-```
-
-Переменные окружения имеют приоритет над `config.yaml`.
-
-### Сборка образа
-
-```bash
-docker build -t album-catalog:config .
-```
-
-### Запуск dev-окружения
-
-```bash
-docker run --rm --name album-catalog-dev -p 8080:5000 ^
-  -e APP_NAME="Каталог альбомов DEV" ^
-  -e PORT=5000 ^
-  -e FLASK_ENV=development ^
-  -e SECRET_KEY=dev-secret-example ^
-  -e DATABASE_URL=sqlite:///albums_dev.db ^
-  album-catalog:config
+docker compose up --build
 ```
 
 Открыть:
@@ -224,80 +35,92 @@ docker run --rm --name album-catalog-dev -p 8080:5000 ^
 http://localhost:8080
 ```
 
-### Запуск prod-окружения тем же образом
-
-```bash
-docker run --rm --name album-catalog-prod -p 8080:7000 ^
-  -e APP_NAME="Каталог альбомов PROD" ^
-  -e PORT=7000 ^
-  -e FLASK_ENV=production ^
-  -e SECRET_KEY=prod-secret-example ^
-  -e DATABASE_URL=sqlite:///albums_prod.db ^
-  album-catalog:config
-```
-
-В этом случае образ не пересобирается. Меняются только переменные окружения.
-
-## Практика 4: подключаемые сервисы и stateless-приложение
-
-В проект добавлен PostgreSQL как внешний подключаемый сервис через `docker-compose.yml`.
-
-Сервисы:
-
-- `app` — Flask-приложение;
-- `db` — PostgreSQL;
-- `nginx` — reverse proxy для доступа к нескольким экземплярам приложения.
-
-### Запуск PostgreSQL и приложения
-
-```bash
-docker compose up --build
-```
-
-После запуска открыть:
-
-```text
-http://localhost:8080
-```
-
-Проверка health endpoint:
+Health endpoint:
 
 ```text
 http://localhost:8080/health
 ```
 
-### Запуск нескольких экземпляров приложения
+Проверка централизованных сессий:
+
+```text
+http://localhost:8080/session-demo
+```
+
+## Масштабирование
 
 ```bash
 docker compose up --build --scale app=3
 ```
 
-### Проверка сбоя одного экземпляра
+Проверка распределения запросов:
 
 ```bash
-docker compose ps
-docker stop <имя_одного_контейнера_app>
+python scripts/load_test.py
 ```
 
-После остановки одного контейнера приложение должно оставаться доступным через:
+В выводе должны появляться разные значения `instance`.
+
+## Release без пересборки
+
+Сначала GitHub Actions публикует образ, например:
 
 ```text
-http://localhost:8080
+ghcr.io/worldwide31/album-catalog:sha-a1b2c3d
 ```
 
-### Проверка сохранения данных
+Затем этот же образ можно запускать с разной конфигурацией.
+
+Пример staging:
 
 ```bash
-docker compose stop app
-docker compose up --scale app=3
+copy .env.staging.example .env.staging
 ```
 
-Созданные альбомы должны сохраниться, потому что они находятся в PostgreSQL-volume `postgres_data`.
+В файле `.env.staging` нужно заменить:
 
-### Полная очистка вместе с данными
+```text
+sha-CHANGE_ME
+```
+
+на реальный тег образа.
+
+Запуск:
 
 ```bash
-docker compose down -v
+docker compose --env-file .env.staging -f docker-compose.release.yml up --scale app=3
 ```
 
-Команда удалит контейнеры и volume с данными PostgreSQL.
+Пример production:
+
+```bash
+copy .env.prod.example .env.prod
+docker compose --env-file .env.prod -f docker-compose.release.yml up --scale app=3
+```
+
+## GitHub Actions
+
+Файл сборки:
+
+```text
+.github/workflows/docker-image.yml
+```
+
+Он запускается при push в `main`, собирает Docker-образ и публикует его в GHCR с тегами:
+
+- `sha-<commit_hash>`;
+- `build-<run_number>`;
+- `latest`.
+
+Файл релиза:
+
+```text
+.github/workflows/release.yml
+```
+
+Он запускается вручную через `workflow_dispatch`, принимает:
+
+- окружение;
+- фиксированный тег образа.
+
+Релиз не пересобирает образ, а только применяет runtime-конфигурацию.

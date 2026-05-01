@@ -1,21 +1,20 @@
 services:
   app:
-    build: .
-    image: album-catalog:local
+    image: ${APP_IMAGE}
     environment:
-      APP_NAME: "Каталог альбомов LOCAL"
+      APP_NAME: ${APP_NAME}
       HOST: "0.0.0.0"
       PORT: "5000"
-      FLASK_ENV: "production"
-      SECRET_KEY: "local-compose-secret-example"
-      APP_VERSION: "local-build"
-      RELEASE_ENVIRONMENT: "local"
+      FLASK_ENV: ${FLASK_ENV:-production}
+      SECRET_KEY: ${SECRET_KEY}
+      APP_VERSION: ${APP_VERSION}
+      RELEASE_ENVIRONMENT: ${RELEASE_ENVIRONMENT}
       DB_ENGINE: "postgresql"
       DB_HOST: "db"
       DB_PORT: "5432"
-      DB_NAME: "albums_db"
-      DB_USER: "albums_user"
-      DB_PASSWORD: "albums_password"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       SESSION_TYPE: "redis"
       SESSION_REDIS_URL: "redis://redis:6379/0"
     expose:
@@ -31,15 +30,15 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: "albums_db"
-      POSTGRES_USER: "albums_user"
-      POSTGRES_PASSWORD: "albums_password"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - album-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U albums_user -d albums_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
