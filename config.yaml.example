@@ -7,4 +7,14 @@ HOST: "0.0.0.0"
 PORT: 5000
 FLASK_ENV: "development"
 SECRET_KEY: "example-yaml-secret"
-DATABASE_URL: "sqlite:///albums_yaml.db"
+
+DB_ENGINE: "sqlite"
+SQLITE_DB_PATH: "albums_yaml.db"
+
+# Для PostgreSQL можно использовать:
+# DB_ENGINE: "postgresql"
+# DB_HOST: "localhost"
+# DB_PORT: 5432
+# DB_NAME: "albums_db"
+# DB_USER: "albums_user"
+# DB_PASSWORD: "albums_password"

@@ -1,12 +1,13 @@
 import os
 from pathlib import Path
+from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
 from dynaconf import Dynaconf
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# .env нужен только для локальной разработки.
+# .env и config.yaml нужны только для локальной разработки.
 # В Docker/staging/prod значения должны приходить из переменных окружения.
 load_dotenv(BASE_DIR / ".env")
 
@@ -41,22 +42,44 @@ def get_setting(name, default=None, cast=str):
     return value
 
 
-def resolve_database_path(database_url):
-    """
-    Поддержка SQLite-строк:
-    sqlite:///albums.db      -> файл внутри проекта
-    sqlite:////data/app.db   -> абсолютный путь внутри контейнера/сервера
-    """
-    if not database_url.startswith("sqlite:///"):
+def build_sqlite_url():
+    sqlite_db_path = get_setting("SQLITE_DB_PATH", "albums.db")
+    path = Path(sqlite_db_path)
+
+    if not path.is_absolute():
+        path = BASE_DIR / path
+
+    return f"sqlite:///{path.as_posix()}"
+
+
+def build_postgres_url():
+    user = quote_plus(get_setting("DB_USER", "albums_user"))
+    password = quote_plus(get_setting("DB_PASSWORD", "albums_password"))
+    host = get_setting("DB_HOST", "db")
+    port = get_setting("DB_PORT", 5432, int)
+    name = get_setting("DB_NAME", "albums_db")
+
+    return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
+
+
+def build_database_url():
+    database_url = get_setting("DATABASE_URL", None)
+
+    if database_url:
+        if database_url.startswith("sqlite:///") and not database_url.startswith("sqlite:////"):
+            raw_path = database_url.replace("sqlite:///", "", 1)
+            path = Path(raw_path)
+            if not path.is_absolute():
+                path = BASE_DIR / path
+            return f"sqlite:///{path.as_posix()}"
         return database_url
 
-    raw_path = database_url.replace("sqlite:///", "", 1)
-    path = Path(raw_path)
+    db_engine = get_setting("DB_ENGINE", "sqlite").lower()
 
-    if path.is_absolute():
-        return path
+    if db_engine == "postgresql":
+        return build_postgres_url()
 
-    return BASE_DIR / path
+    return build_sqlite_url()
 
 
 class Config:
@@ -67,5 +90,6 @@ class Config:
     DEBUG = FLASK_ENV == "development"
 
     SECRET_KEY = get_setting("SECRET_KEY", "change-me-only-for-local-dev")
-    DATABASE_URL = get_setting("DATABASE_URL", "sqlite:///albums.db")
-    DB_PATH = resolve_database_path(DATABASE_URL)
+
+    DB_ENGINE = get_setting("DB_ENGINE", "sqlite")
+    DATABASE_URL = build_database_url()

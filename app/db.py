@@ -1,35 +1,42 @@
-import sqlite3
-from flask import current_app, g
+from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine
+
+metadata = MetaData()
+
+albums_table = Table(
+    "albums",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("title", String(255), nullable=False),
+    Column("artist", String(255), nullable=False),
+    Column("year", Integer, nullable=False),
+    Column("rating", Integer, nullable=False),
+)
 
 
-def get_db():
-    if "db" not in g:
-        g.db = sqlite3.connect(current_app.config["DB_PATH"])
-        g.db.row_factory = sqlite3.Row
-    return g.db
+def create_db_engine(app):
+    database_url = app.config["DATABASE_URL"]
+
+    connect_args = {}
+    if database_url.startswith("sqlite"):
+        connect_args = {"check_same_thread": False}
+
+    return create_engine(
+        database_url,
+        future=True,
+        pool_pre_ping=True,
+        connect_args=connect_args,
+    )
 
 
-def close_db(error=None):
-    db = g.pop("db", None)
-    if db is not None:
-        db.close()
+def get_engine():
+    from flask import current_app
+
+    return current_app.extensions["db_engine"]
 
 
 def init_db(app):
-    with app.app_context():
-        db = sqlite3.connect(app.config["DB_PATH"])
-        db.execute(
-            """
-            CREATE TABLE IF NOT EXISTS albums (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                artist TEXT NOT NULL,
-                year INTEGER NOT NULL,
-                rating INTEGER NOT NULL
-            )
-            """
-        )
-        db.commit()
-        db.close()
+    engine = create_db_engine(app)
+    app.extensions["db_engine"] = engine
 
-    app.teardown_appcontext(close_db)
+    with engine.begin() as connection:
+        metadata.create_all(connection)

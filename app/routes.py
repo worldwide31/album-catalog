@@ -1,5 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for
-from .services import get_all_albums, add_album, delete_album
+import socket
+
+from flask import Blueprint, current_app, jsonify, redirect, render_template, request, url_for
+
+from .services import add_album, count_albums, delete_album, get_all_albums
 
 albums_bp = Blueprint("albums", __name__)
 
@@ -32,3 +35,16 @@ def add():
 def delete(album_id):
     delete_album(album_id)
     return redirect(url_for("albums.index"))
+
+
+@albums_bp.route("/health")
+def health():
+    return jsonify(
+        {
+            "status": "ok",
+            "app_name": current_app.config["APP_NAME"],
+            "database": current_app.config["DB_ENGINE"],
+            "instance": socket.gethostname(),
+            "albums_count": count_albums(),
+        }
+    )

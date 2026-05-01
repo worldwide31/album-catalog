@@ -237,3 +237,67 @@ docker run --rm --name album-catalog-prod -p 8080:7000 ^
 ```
 
 В этом случае образ не пересобирается. Меняются только переменные окружения.
+
+## Практика 4: подключаемые сервисы и stateless-приложение
+
+В проект добавлен PostgreSQL как внешний подключаемый сервис через `docker-compose.yml`.
+
+Сервисы:
+
+- `app` — Flask-приложение;
+- `db` — PostgreSQL;
+- `nginx` — reverse proxy для доступа к нескольким экземплярам приложения.
+
+### Запуск PostgreSQL и приложения
+
+```bash
+docker compose up --build
+```
+
+После запуска открыть:
+
+```text
+http://localhost:8080
+```
+
+Проверка health endpoint:
+
+```text
+http://localhost:8080/health
+```
+
+### Запуск нескольких экземпляров приложения
+
+```bash
+docker compose up --build --scale app=3
+```
+
+### Проверка сбоя одного экземпляра
+
+```bash
+docker compose ps
+docker stop <имя_одного_контейнера_app>
+```
+
+После остановки одного контейнера приложение должно оставаться доступным через:
+
+```text
+http://localhost:8080
+```
+
+### Проверка сохранения данных
+
+```bash
+docker compose stop app
+docker compose up --scale app=3
+```
+
+Созданные альбомы должны сохраниться, потому что они находятся в PostgreSQL-volume `postgres_data`.
+
+### Полная очистка вместе с данными
+
+```bash
+docker compose down -v
+```
+
+Команда удалит контейнеры и volume с данными PostgreSQL.

@@ -1,11 +1,25 @@
-from .db import get_db
+from sqlalchemy import delete, func, insert, select
+
+from .db import albums_table, get_engine
 
 
 def get_all_albums():
-    db = get_db()
-    return db.execute(
-        "SELECT id, title, artist, year, rating FROM albums ORDER BY id DESC"
-    ).fetchall()
+    engine = get_engine()
+
+    with engine.connect() as connection:
+        rows = connection.execute(
+            select(albums_table).order_by(albums_table.c.id.desc())
+        ).mappings().all()
+
+    return [dict(row) for row in rows]
+
+
+def count_albums():
+    engine = get_engine()
+
+    with engine.connect() as connection:
+        result = connection.execute(select(func.count()).select_from(albums_table))
+        return result.scalar_one()
 
 
 def add_album(title, artist, year, rating):
@@ -14,20 +28,26 @@ def add_album(title, artist, year, rating):
     if errors:
         return errors
 
-    db = get_db()
-    db.execute(
-        "INSERT INTO albums (title, artist, year, rating) VALUES (?, ?, ?, ?)",
-        (title.strip(), artist.strip(), int(year), int(rating)),
-    )
-    db.commit()
+    engine = get_engine()
+
+    with engine.begin() as connection:
+        connection.execute(
+            insert(albums_table).values(
+                title=title.strip(),
+                artist=artist.strip(),
+                year=int(year),
+                rating=int(rating),
+            )
+        )
 
     return []
 
 
 def delete_album(album_id):
-    db = get_db()
-    db.execute("DELETE FROM albums WHERE id = ?", (album_id,))
-    db.commit()
+    engine = get_engine()
+
+    with engine.begin() as connection:
+        connection.execute(delete(albums_table).where(albums_table.c.id == album_id))
 
 
 def validate_album(title, artist, year, rating):
